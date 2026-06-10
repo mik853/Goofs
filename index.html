@@ -739,9 +739,9 @@
       <div class="section-label" style="color:var(--ink);">find us ↓</div>
 
       <!-- TWITTER PLACEHOLDER — replace YOUR_TWITTER_HANDLE with your handle -->
-      <a href="https://twitter.com/the_g00fs" target="_blank" class="social-link">
+      <a href="https://twitter.com/The_G00fs" target="_blank" class="social-link">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.264 5.634 5.9-5.634Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        @the_g00fs
+        @The_G00fs
       </a>
 
       <div style="margin-top:12px;">
@@ -749,6 +749,71 @@
           🐦 follow the goofies. it's too late. you're already infected.
         </div>
       </div>
+    </div>
+
+    <!-- WALLET CHECKER -->
+    <div class="wallet-checker fade-in-delay-3" style="margin-top:32px;">
+      <div class="section-label" style="color:var(--ink);">am i infected? ↓</div>
+      <p style="font-family:'Patrick Hand',cursive;font-size:0.95rem;color:#888;margin-bottom:12px;">
+        enter your wallet to check if you're on the list
+      </p>
+
+      <div class="checker-box" id="checkerBox">
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;position:relative;">
+            <input
+              type="text"
+              id="walletInput"
+              placeholder="0x..."
+              autocomplete="off"
+              spellcheck="false"
+              style="
+                width:100%;
+                font-family:'Patrick Hand',cursive;
+                font-size:1rem;
+                padding:10px 12px;
+                border:2px solid var(--ink);
+                background:rgba(255,255,255,0.6);
+                outline:none;
+                border-radius:0;
+                color:var(--ink);
+                letter-spacing:0.02em;
+              "
+              onkeydown="if(event.key==='Enter') checkWallet()"
+            >
+            <!-- pencil underline animation -->
+            <div id="inputLine" style="height:2px;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform 0.3s ease;margin-top:2px;"></div>
+          </div>
+          <button
+            onclick="checkWallet()"
+            id="checkBtn"
+            style="
+              font-family:'Architects Daughter',cursive;
+              font-size:1rem;
+              padding:10px 18px;
+              background:var(--ink);
+              color:var(--paper);
+              border:none;
+              cursor:pointer;
+              transition:all 0.2s ease;
+              white-space:nowrap;
+            "
+            onmouseover="this.style.background='var(--red-pen)'"
+            onmouseout="this.style.background='var(--ink)'"
+          >check it →</button>
+        </div>
+
+        <!-- Result area -->
+        <div id="walletResult" style="margin-top:16px;display:none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- scribbled divider 2 -->
+    <div style="margin:20px 0;text-align:center;opacity:0.3;">
+      <svg width="300" height="20" viewBox="0 0 300 20">
+        <path d="M0,10 Q30,2 60,10 Q90,18 120,10 Q150,2 180,10 Q210,18 240,10 Q270,2 300,10" stroke="#555" stroke-width="2" fill="none"/>
+      </svg>
     </div>
 
     <!-- Footer scrawl -->
@@ -802,6 +867,76 @@
 
   document.querySelectorAll('.fade-in, .fade-in-delay-1, .fade-in-delay-2, .fade-in-delay-3, .fade-in-delay-4')
     .forEach(el => observer.observe(el));
+
+  // ── WALLET CHECKER ──
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD_xLsOvtt6wF13tk9JOVlviByBPLR3NIosfmGikpO5cIYzpmQZ4MdTxGwcA2fE2gZkw/exec';
+
+  document.getElementById('walletInput').addEventListener('focus', () => {
+    document.getElementById('inputLine').style.transform = 'scaleX(1)';
+  });
+  document.getElementById('walletInput').addEventListener('blur', () => {
+    document.getElementById('inputLine').style.transform = 'scaleX(0)';
+  });
+
+  async function checkWallet() {
+    const input = document.getElementById('walletInput').value.trim();
+    const resultDiv = document.getElementById('walletResult');
+    const btn = document.getElementById('checkBtn');
+
+    if (!input) {
+      showResult('error', '✗ enter a wallet address first, goof.');
+      return;
+    }
+
+    // basic ETH address check
+    if (!/^0x[0-9a-fA-F]{40}$/.test(input)) {
+      showResult('error', '✗ that doesn\'t look like a real wallet. try again.');
+      return;
+    }
+
+    btn.textContent = 'checking...';
+    btn.disabled = true;
+    resultDiv.style.display = 'none';
+
+    try {
+      const res = await fetch(`${SCRIPT_URL}?wallet=${encodeURIComponent(input.toLowerCase())}`);
+      const data = await res.json();
+
+      if (data.found) {
+        showResult('yes', '✓ you\'re on the list. welcome to the infection.');
+      } else {
+        showResult('no', '✗ not found. stay goofy and try again later.');
+      }
+    } catch (err) {
+      showResult('error', '⚠ something broke. blame the brain rot.');
+    }
+
+    btn.textContent = 'check it →';
+    btn.disabled = false;
+  }
+
+  function showResult(type, message) {
+    const resultDiv = document.getElementById('walletResult');
+    const colors = {
+      yes:   { bg: 'rgba(30,132,73,0.08)',  border: 'var(--green-pen)', color: 'var(--green-pen)' },
+      no:    { bg: 'rgba(192,57,43,0.07)',  border: 'var(--red-pen)',   color: 'var(--red-pen)'   },
+      error: { bg: 'rgba(100,100,100,0.07)', border: '#aaa',            color: '#888'              },
+    };
+    const c = colors[type];
+    resultDiv.style.cssText = `
+      display:block;
+      padding:12px 16px;
+      border:2px solid ${c.border};
+      background:${c.bg};
+      font-family:'Architects Daughter',cursive;
+      font-size:1.2rem;
+      color:${c.color};
+      transform:rotate(-0.5deg);
+      animation:fadeInUp 0.4s ease forwards;
+    `;
+    resultDiv.textContent = message;
+  }
+
 </script>
 </body>
 </html>
